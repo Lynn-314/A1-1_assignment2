@@ -1,0 +1,169 @@
+Skip to content
+Search or jump to…
+
+Pull requests
+Issues
+Marketplace
+Explore
+ 
+@Lynn-314 
+Learn Git and GitHub without any code!
+Using the Hello World guide, you’ll start a branch, write comments, and open a pull request.
+
+
+Lynn-314
+/
+AI-1-assignment-2
+Private
+1
+00
+Code
+Issues
+Pull requests
+Actions
+Projects
+Security
+Insights
+Settings
+AI-1-assignment-2/debalina_draft1_withoutSmoothing
+@Lynn-314
+Lynn-314 Create debalina_draft1_withoutSmoothing
+Latest commit 43caba2 24 minutes ago
+ History
+ 1 contributor
+135 lines (108 sloc)  4.11 KB
+  
+import copy
+###Input###################################
+###number of variables
+num_variables = int(input())
+
+##domain values
+
+all_domains = []
+for i in range(num_variables):
+  domain = []
+  domain_input = input()
+  domain = domain_input.split(", ")
+  all_domains.append(domain)
+
+#print(all_domains)
+
+##conditional dpendency
+
+all_parents= []
+for i in range(num_variables):
+  parents =[]
+  all_parents.append(parents)
+for i in range(num_variables):
+  row = input().split(" ")
+  for j in range(num_variables):
+    if (row[j] == '1'):
+      all_parents[j].append(i)
+
+#print(all_parents)
+
+####################################################################
+###making tables for joint probability  
+  
+
+def make_table(shape):
+    if len(shape) == 1:
+        return [0 for j in range(shape[0])]
+    items = shape[0]
+    new_shape = shape[1:]
+    sub_table = make_table(new_shape)
+    return [copy.deepcopy(sub_table) for j in range(items)]
+
+
+all_jointProbability = []
+for i in range(num_variables):
+  """a table(nested list) for each variable- ith variable"""
+  table = []
+  listOfParameters = []
+  listOfParameters.extend(all_parents[i])
+  listOfParameters.append(i)
+  table_shape = [len(all_domains[parameter]) for parameter in listOfParameters]
+  table = make_table(table_shape)  
+  all_jointProbability.append(table)  
+################################################################
+
+##########input samples - increasing count
+def increase_count(array_list, index_list):
+  #print(array_list)
+  if (len(index_list)==0):
+    array_list = array_list+1
+    return array_list
+  else:
+    index = index_list.pop(0)
+    array_list[index] = increase_count(array_list[index],index_list)
+    return array_list
+
+num_input = int(input())
+for x in range(num_input):
+  sample_input = input()
+  sample = sample_input.split(",") ##value  of ith variable is stored in sample[i]
+  sample_domainIndex = [(all_domains[i].index(val)) for i, val in enumerate(sample)] ##index  of ith variable is stored in sample[i]
+  for variable in range(num_variables):
+    ##table to update -> all_jointProbability[variable]
+    indexToUpdate=[sample_domainIndex[parent] for parent in all_parents[variable]]
+    indexToUpdate.append(sample_domainIndex[variable])
+    all_jointProbability[variable] = increase_count(all_jointProbability[variable],indexToUpdate)
+#print(all_jointProbability)
+
+
+
+##############################################################
+
+#####calculating probability distribusion
+def calc_prob(array_list, index_list):
+  if ((len(index_list)<= 1)):
+    total = float(sum(array_list))
+    index = index_list[0]
+    for k in range(index):
+      array_list[k] = float(array_list[k]/total)
+    return array_list
+  else:
+    index = index_list.pop(0)
+    for j in range(index):
+        array_list[j] = calc_prob(array_list[j],index_list)
+    index_list.insert(0,index)
+    return array_list
+
+
+for variable in range(num_variables):
+  ##table to update -> all_jointProbability[variable]
+  listOfParameters = []
+  listOfParameters.extend(all_parents[variable])
+  listOfParameters.append(variable)
+  table_shape = [len(all_domains[parameter]) for parameter in listOfParameters]
+  all_jointProbability[variable] = calc_prob(all_jointProbability[variable],table_shape)
+
+#print(all_jointProbability)
+
+
+
+######################################################################
+##printing joint probability
+def display_table(array_list,index_list,i):
+  if ((len(index_list)== 1) and isinstance(array_list[i],float)):
+    print(array_list[i],end=" ")
+  else:
+    if index_list:        
+        index = index_list.pop(0)
+        for j in range(index):
+            display_table(array_list[j],index_list,i)
+        index_list.insert(0,index)
+
+
+for variable in range(num_variables):
+  ##table to update -> all_jointProbability[variable]
+  listOfParameters = []
+  listOfParameters.extend(all_parents[variable])
+  listOfParameters.append(variable)
+  table_shape = [len(all_domains[parameter]) for parameter in listOfParameters]
+  dependent_variable_domain = len(all_domains[variable])
+  for dependent_varValue in range(dependent_variable_domain):
+    display_table(all_jointProbability[variable],table_shape,dependent_varValue )
+  print()
+ 
